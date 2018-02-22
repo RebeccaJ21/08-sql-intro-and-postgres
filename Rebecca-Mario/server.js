@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const express = require('express');
-
+const pg = require('pg');
 const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -12,9 +12,9 @@ const app = express();
 // const conString = 'postgres://USER:PASSWORD@HOST:PORT/DBNAME';
 
 // Mac:
-const conString = 'postgres://localhost:5432';
+const conString = 'postgres://localhost:5432/postgres';
 
-const client = new pg.Client();
+const client = new pg.Client(conString);
 
 // REVIEW: Use the client object to connect to our DB.
 client.connect();
@@ -29,7 +29,7 @@ app.use(express.static('./public'));
 // REVIEW: Routes for requesting HTML resources
 app.get('/new', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // Numbers 1, 2 and 5 correspond. This is enacting the Create part of CRUD. 
+  // Numbers 1, 2 and 5 correspond. This is enacting the Create part of CRUD.
   response.sendFile('new.html', {root: './public'});
 });
 
@@ -37,8 +37,8 @@ app.get('/new', (request, response) => {
 // REVIEW: Routes for making API calls to use CRUD Operations on our database
 app.get('/articles', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // Numbers 3 and 4 correspond to the server.js making a query to the database and retreving a result. 
-  client.query('')
+  // Numbers 3 and 4 correspond to the server.js making a query to the database and retreving a result.
+  client.query('SELECT * FROM articles')
     .then(function(result) {
       response.send(result.rows);
     })
@@ -49,7 +49,7 @@ app.get('/articles', (request, response) => {
 
 app.post('/articles', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // This line corresponds with numbers 2 and 5. The client makes a query/request which talks to the server.js and retrives a response. This is the create part of CRUD. 
+  // This line corresponds with numbers 2 and 5. The client makes a query/request which talks to the server.js and retrives a response. This is the create part of CRUD.
   client.query(
     `INSERT INTO
     articles(title, author, "authorUrl", category, "publishedOn", body)
@@ -74,9 +74,11 @@ app.post('/articles', (request, response) => {
 
 app.put('/articles/:id', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // This corresponds with numbers This is the update part of CRUD. 
+  // This corresponds with numbers This is the update part of CRUD.
   client.query(
-    ` `, []
+    `SELECT FROM articles WHERE article_id=$2);
+    `,
+    [request.body.author]
   )
     .then(() => {
       response.send('update complete')
@@ -88,9 +90,9 @@ app.put('/articles/:id', (request, response) => {
 
 app.delete('/articles/:id', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // This is enacted by the delete part of CRUD. This is interacting with the deleteRecord pice of server.js. Numbers 1,2,and 3 correspond to the following line of code. 
+  // This is enacted by the delete part of CRUD. This is interacting with the deleteRecord pice of server.js. Numbers 1,2,and 3 correspond to the following line of code.
   client.query(
-    `DELETE FROM articles WHERE article_id=$1;`,
+    `DELETE FROM /articles WHERE article_id=$1;`,
     [request.params.id]
   )
     .then(() => {
@@ -105,7 +107,7 @@ app.delete('/articles', (request, response) => {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
   //Numbers 4 and 5 correspond to the following line of code. This also interacts with the deleteRecord method in article.js. This is enacted by the delete part of CRUD.
   client.query(
-    ''
+    'DELETE FROM (*)'
   )
     .then(() => {
       response.send('Delete complete')
@@ -116,7 +118,7 @@ app.delete('/articles', (request, response) => {
 });
 
 // COMMENT: What is this function invocation doing?
-// If there is no table the function is invoked, creates a table and pulls data from database. 
+// If there is no table the function is invoked, creates a table and pulls data from database.
 loadDB();
 
 app.listen(PORT, () => {
@@ -128,7 +130,7 @@ app.listen(PORT, () => {
 ////////////////////////////////////////
 function loadArticles() {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  //This line of code is interacting with the Article.loadAll in server.js. This passes results so it coresponds with numbers 1,4 and5. This is being enacted by the Read and Update part of CRUD. 
+  //This line of code is interacting with the Article.loadAll in server.js. This passes results so it coresponds with numbers 1,4 and5. This is being enacted by the Read and Update part of CRUD.
   client.query('SELECT COUNT(*) FROM articles')
     .then(result => {
     // REVIEW: result.rows is an array of objects that PostgreSQL returns as a response to a query.
@@ -152,7 +154,7 @@ function loadArticles() {
 
 function loadDB() {
   // COMMENT: What number(s) of the full-stack-diagram.png image correspond to the following line of code? Which method of article.js is interacting with this particular piece of `server.js`? What part of CRUD is being enacted/managed by this particular piece of code?
-  // This is enacted by the create part of crud. It corresponds to numbers 3 and 4. It i sinteracting with the .loadAll in the server.js. 
+  // This is enacted by the create part of crud. It corresponds to numbers 3 and 4. It i sinteracting with the .loadAll in the server.js.
   client.query(`
     CREATE TABLE IF NOT EXISTS articles (
       article_id SERIAL PRIMARY KEY,
